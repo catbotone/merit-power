@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Merit Power</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(0, 255, 255, .18), transparent 32%),
+        radial-gradient(circle at bottom, rgba(34, 197, 94, .12), transparent 34%),
+        linear-gradient(135deg, #030712, #07111f 55%, #020617);
+      color: #e5faff;
+      text-align: center;
+      padding: 14px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,255,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,255,.055) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    h1 {
+      margin: 8px 0 6px;
+      font-size: clamp(30px, 8vw, 48px);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: white;
+      text-shadow: 0 0 10px #00eaff, 0 0 30px rgba(0,234,255,.75);
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #67e8f9;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .lock-panel {
+      max-width: 560px;
+      margin: 0 auto 16px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(2, 6, 23, .84);
+      border: 1px solid rgba(103, 232, 249, .55);
+      box-shadow: 0 0 18px rgba(0,234,255,.22);
+    }
+
+    .lock-panel.unlocked {
+      border-color: rgba(34,197,94,.9);
+      box-shadow:
+        0 0 18px rgba(34,197,94,.55),
+        inset 0 0 18px rgba(34,197,94,.08);
+    }
+
+    .lock-panel.locked {
+      border-color: rgba(239,68,68,.45);
+    }
+
+    .pattern-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    .pattern-square {
+      height: 50px;
+      border-radius: 12px;
+      border: 2px solid rgba(148,163,184,.45);
+      background: rgba(15,23,42,.9);
+      box-shadow: inset 0 0 12px rgba(0,0,0,.75);
+      cursor: pointer;
+    }
+
+    .pattern-square.on {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.45), transparent 24%),
+        linear-gradient(180deg, #ff5a5a, #dc2626 60%, #7f1d1d);
+      border-color: #ffb4b4;
+      box-shadow:
+        0 0 10px rgba(239,68,68,.95),
+        0 0 24px rgba(239,68,68,.65),
+        inset 0 0 12px rgba(255,255,255,.18);
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ef4444;
+    }
+
+    .status.granted {
+      color: #22c55e;
+      text-shadow: 0 0 12px rgba(34,197,94,.85);
+    }
+
+    .dashboard {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .player {
+      min-width: 0;
+      border-radius: 26px;
+      padding: 14px 10px 16px;
+      background:
+        linear-gradient(180deg, rgba(15, 23, 42, .94), rgba(2, 6, 23, .96));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:
+        0 14px 30px rgba(0,0,0,.45),
+        inset 0 0 22px rgba(255,255,255,.04);
+    }
+
+    .player.grant {
+      --main: #22d3ee;
+      --mid: #0891b2;
+      --dark: #0e7490;
+      border-color: rgba(34,211,238,.56);
+      box-shadow: 0 0 22px rgba(34,211,238,.18), inset 0 0 22px rgba(34,211,238,.05);
+    }
+
+    .player.walker {
+      --main: #86efac;
+      --mid: #22c55e;
+      --dark: #15803d;
+      border-color: rgba(34,197,94,.56);
+      box-shadow: 0 0 22px rgba(34,197,94,.18), inset 0 0 22px rgba(34,197,94,.05);
+    }
+
+    .name {
+      margin: 0 0 8px;
+      font-size: clamp(22px, 7vw, 34px);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: white;
+      text-shadow: 0 0 14px var(--main);
+    }
+
+    .control {
+      width: min(120px, 100%);
+      min-height: 58px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.35);
+      color: white;
+      font-size: 28px;
+      font-weight: 900;
+      cursor: pointer;
+      margin: 0 auto;
+      text-transform: uppercase;
+    }
+
+    .plus {
+      background: linear-gradient(180deg, #22c55e, #14532d);
+      box-shadow: 0 0 16px rgba(34,197,94,.48);
+    }
+
+    .minus {
+      background: linear-gradient(180deg, #ef4444, #7f1d1d);
+      box-shadow: 0 0 16px rgba(239,68,68,.45);
+    }
+
+    .disabled {
+      opacity: .32;
+      cursor: not-allowed;
+      filter: grayscale(.5);
+      box-shadow: none;
+    }
+
+    .tube-wrap {
+      margin: 14px auto;
+      width: min(118px, 32vw);
+      padding: 10px;
+      border-radius: 28px;
+      background: rgba(0,0,0,.42);
+      border: 2px solid rgba(103,232,249,.38);
+      box-shadow:
+        inset 0 0 24px rgba(0,0,0,.75),
+        0 0 22px rgba(103,232,249,.22);
+    }
+
+    .tube {
+      position: relative;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 5px;
+      height: min(430px, 48vh);
+      min-height: 330px;
+      padding: 10px;
+      border-radius: 22px;
+      border: 2px solid var(--main);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.10), transparent 20%, transparent 80%, rgba(255,255,255,.08)),
+        rgba(2, 6, 23, .94);
+      box-shadow:
+        0 0 18px var(--main),
+        inset 0 0 22px rgba(0,0,0,.85),
+        inset 0 0 18px rgba(255,255,255,.05);
+      overflow: hidden;
+    }
+
+    .tube::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      bottom: 14px;
+      left: 18px;
+      width: 10px;
+      border-radius: 999px;
+      background: linear-gradient(to bottom, rgba(255,255,255,.42), transparent);
+      opacity: .32;
+      pointer-events: none;
+    }
+
+    .cell {
+      flex: 1;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, .8);
+      border: 1px solid rgba(148,163,184,.25);
+      box-shadow: inset 0 0 8px rgba(0,0,0,.7);
+    }
+
+    .cell.on {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.60), transparent 20%),
+        linear-gradient(180deg, var(--main), var(--mid) 58%, var(--dark));
+      border-color: var(--main);
+      box-shadow:
+        0 0 10px var(--main),
+        0 0 22px rgba(34,211,238,.45),
+        inset 0 0 10px rgba(255,255,255,.28);
+    }
+
+    .hours {
+      margin: 8px 0 10px;
+      font-size: clamp(24px, 7vw, 38px);
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: white;
+      text-shadow: 0 0 13px var(--main);
+    }
+
+    .label {
+      display: block;
+      color: #94a3b8;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: -4px;
+      margin-bottom: 8px;
+    }
+
+    @media (max-height: 680px) {
+      .tube {
+        height: 330px;
+        min-height: 280px;
+      }
+
+      .control {
+        min-height: 50px;
+      }
+
+      .tube-wrap {
+        margin: 10px auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>⚡ Merit Power ⚡</h1>
+  <div class="subtitle">Vertical Energy Meter</div>
+
+  <section id="lockPanel" class="lock-panel locked">
+    <div class="pattern-row">
+      <button class="pattern-square" data-index="0" aria-label="Pattern square 1"></button>
+      <button class="pattern-square" data-index="1" aria-label="Pattern square 2"></button>
+      <button class="pattern-square" data-index="2" aria-label="Pattern square 3"></button>
+      <button class="pattern-square" data-index="3" aria-label="Pattern square 4"></button>
+      <button class="pattern-square" data-index="4" aria-label="Pattern square 5"></button>
+    </div>
+
+    <div id="status" class="status">Access Denied</div>
+  </section>
+
+  <main class="dashboard">
+    <section class="player grant">
+      <h2 class="name">Grant</h2>
+      <button id="grantPlus" class="control plus disabled">+1</button>
+
+      <div class="tube-wrap">
+        <div id="grantTube" class="tube"></div>
+      </div>
+
+      <div id="grantHours" class="hours">0 Hours</div>
+      <span class="label">Banked / 12</span>
+      <button id="grantMinus" class="control minus disabled">−1</button>
+    </section>
+
+    <section class="player walker">
+      <h2 class="name">Walker</h2>
+      <button id="walkerPlus" class="control plus disabled">+1</button>
+
+      <div class="tube-wrap">
+        <div id="walkerTube" class="tube"></div>
+      </div>
+
+      <div id="walkerHours" class="hours">0 Hours</div>
+      <span class="label">Banked / 12</span>
+      <button id="walkerMinus" class="control minus disabled">−1</button>
+    </section>
+  </main>
+
+  <script>
+    const MAX_HOURS = 12;
+    const SAVE_KEY = "meritPowerAutoPatternLockV1";
+    const CORRECT_PATTERN = [true, true, false, false, true];
+
+    let pattern = [false, false, false, false, false];
+    let isUnlocked = false;
+
+    let scores = { grant: 0, walker: 0 };
+
+    const savedScores = localStorage.getItem(SAVE_KEY);
+    if (savedScores) {
+      try {
+        scores = JSON.parse(savedScores);
+      } catch (error) {
+        scores = { grant: 0, walker: 0 };
+      }
+    }
+
+    const statusText = document.getElementById("status");
+    const lockPanel = document.getElementById("lockPanel");
+    const patternSquares = Array.from(document.querySelectorAll(".pattern-square"));
+
+    const buttons = {
+      grantPlus: document.getElementById("grantPlus"),
+      grantMinus: document.getElementById("grantMinus"),
+      walkerPlus: document.getElementById("walkerPlus"),
+      walkerMinus: document.getElementById("walkerMinus")
+    };
+
+    function saveScores() {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(scores));
+    }
+
+    function clampHours(value) {
+      return Math.max(0, Math.min(MAX_HOURS, value));
+    }
+
+    function patternMatches() {
+      return pattern.every((value, index) => value === CORRECT_PATTERN[index]);
+    }
+
+    function updateLockState() {
+      isUnlocked = patternMatches();
+
+      if (isUnlocked) {
+        statusText.textContent = "Access Granted";
+        statusText.classList.add("granted");
+        lockPanel.classList.add("unlocked");
+        lockPanel.classList.remove("locked");
+      } else {
+        statusText.textContent = "Access Denied";
+        statusText.classList.remove("granted");
+        lockPanel.classList.remove("unlocked");
+        lockPanel.classList.add("locked");
+      }
+    }
+
+    function drawTube(elementId, value) {
+      const tube = document.getElementById(elementId);
+      tube.innerHTML = "";
+
+      for (let i = 1; i <= MAX_HOURS; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        if (i <= value) cell.classList.add("on");
+        tube.appendChild(cell);
+      }
+    }
+
+    function setEditingButtons(enabled) {
+      Object.values(buttons).forEach(button => {
+        button.disabled = !enabled;
+        button.classList.toggle("disabled", !enabled);
+      });
+    }
+
+    function hourLabel(value) {
+      return value === 1 ? "1 Hour" : value + " Hours";
+    }
+
+    function renderPattern() {
+      patternSquares.forEach((square, index) => {
+        square.classList.toggle("on", pattern[index]);
+      });
+    }
+
+    function render() {
+      scores.grant = clampHours(Number(scores.grant) || 0);
+      scores.walker = clampHours(Number(scores.walker) || 0);
+
+      document.getElementById("grantHours").textContent = hourLabel(scores.grant);
+      document.getElementById("walkerHours").textContent = hourLabel(scores.walker);
+
+      drawTube("grantTube", scores.grant);
+      drawTube("walkerTube", scores.walker);
+
+      updateLockState();
+      setEditingButtons(isUnlocked);
+      renderPattern();
+    }
+
+    function changeScore(kid, amount) {
+      if (!isUnlocked) return;
+
+      scores[kid] = clampHours(scores[kid] + amount);
+      saveScores();
+      render();
+    }
+
+    patternSquares.forEach(square => {
+      square.addEventListener("click", () => {
+        const index = Number(square.dataset.index);
+        pattern[index] = !pattern[index];
+        render();
+      });
+    });
+
+    buttons.grantPlus.addEventListener("click", () => changeScore("grant", 1));
+    buttons.grantMinus.addEventListener("click", () => changeScore("grant", -1));
+    buttons.walkerPlus.addEventListener("click", () => changeScore("walker", 1));
+    buttons.walkerMinus.addEventListener("click", () => changeScore("walker", -1));
+
+    render();
+  </script>
+</body>
+</html>
